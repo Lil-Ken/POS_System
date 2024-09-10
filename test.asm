@@ -5,47 +5,49 @@
 	; Predefined data
     username db 'admin', 0
     password db 'pass', 0
-    inputBuffer db 20, 0, 20 dup(?)
+    inputBuffer db 20, 0, 20 dup('$')
 	optionBuffer db 1 dup(?)
     newlines db 13, 10, '$'
 	clearScreens db 25 dup(13, 10), '$'
+	multLines12 db 12 dup(13, 10), '$'
+	multLines6 db 6 dup(13, 10), '$'
 	ten db 10
 	hund db 100
 	
 	; Start messages
-    welcomeMsg db 'Welcome to POS System$', 0
-    option1 db '1. Login$', 0
-    option0 db '0. Exit Program$', 0
-    option2 db '1. Try Again$', 0
-    chooseOption db 'Choose an option: $', 0
+    welcomeMsg db 'Welcome to POS System$'
+    option1 db '1. Login$'
+    option0 db '0. Exit Program$'
+    option2 db '1. Try Again$'
+    chooseOption db 'Choose an option: $'
 	
 	; Login messages
-    loginPrompt db 'Enter Username: $', 0
-    passPrompt db 'Enter Password: $', 0
-    loginSucc db 'Login successful!$', 0
-    logoutSucc db 'Logout successful!$', 0
-    loginFail db 'Invalid credentials$', 0
+    loginPrompt db 'Enter Username: $'
+    passPrompt db 'Enter Password: $'
+    loginSucc db 'Login successful!$'
+    logoutSucc db 'Logout successful!$'
+    loginFail db 'Invalid credentials$'
 	
 	; Main menu options
-    menuOption1 db '1. View All Products$', 0
-    menuOption2 db '2. Add Item to Cart$', 0
-    menuOption3 db '3. View Cart$', 0
-    menuOption4 db '4. Remove Item from Cart$', 0
-    menuOption5 db '5. Checkout$', 0
-    menuOption0 db '0. Logout$', 0
-    invalidOption db 'Invalid option, please choose again$', 0
+    menuOption1 db '1. View All Products$'
+    menuOption2 db '2. Add Item to Cart$'
+    menuOption3 db '3. View Cart$'
+    menuOption4 db '4. Remove Item from Cart$'
+    menuOption5 db '5. Checkout$'
+    menuOption0 db '0. Logout$'
+    invalidOption db 'Invalid option, please choose again$'
 	
 	; Display Items
-	item1 db '1. Phone Case               $', 0
-    item2 db '2. Screen Protector         $', 0
-    item3 db '3. Charging Cable           $', 0
-    item4 db '4. Power Bank               $', 0
-    item5 db '5. Wireless Charger         $', 0
-    item6 db '6. Phone Stand              $', 0
-    item7 db '7. Earbuds                  $', 0
-    item8 db '8. Bluetooth Speaker        $', 0
-    item9 db '9. Car Mount                $', 0
-    item10 db '10. Memory Card             $', 0
+	item1 db '1. Phone Case               $'
+    item2 db '2. Screen Protector         $'
+    item3 db '3. Charging Cable           $'
+    item4 db '4. Power Bank               $'
+    item5 db '5. Wireless Charger         $'
+    item6 db '6. Phone Stand              $'
+    item7 db '7. Earbuds                  $'
+    item8 db '8. Bluetooth Speaker        $'
+    item9 db '9. Car Mount                $'
+    item10 db '10. Memory Card             $'
 	
 	; Item Array
 	itemArray dw offset item1
@@ -60,16 +62,16 @@
               dw offset item10
 	
 	; Products
-	product1 db 'Phone Case       $', 0
-    product2 db 'Screen Protector $', 0
-    product3 db 'Charging Cable   $', 0
-    product4 db 'Power Bank       $', 0
-    product5 db 'Wireless Charger $', 0
-    product6 db 'Phone Stand      $', 0
-    product7 db 'Earbuds          $', 0
-    product8 db 'Bluetooth Speaker$', 0
-    product9 db 'Car Mount        $', 0
-    product10 db 'Memory Card     $', 0
+	product1 db 'Phone Case       $'
+    product2 db 'Screen Protector $'
+    product3 db 'Charging Cable   $'
+    product4 db 'Power Bank       $'
+    product5 db 'Wireless Charger $'
+    product6 db 'Phone Stand      $'
+    product7 db 'Earbuds          $'
+    product8 db 'Bluetooth Speaker$'
+    product9 db 'Car Mount        $'
+    product10 db 'Memory Card     $'
 	
 	; Product Array
 	productArray dw offset product1
@@ -84,9 +86,9 @@
                  dw offset product10
 
 	prices db 10, 8, 12, 20, 30, 10, 15, 16, 12, 20
-	rm db 'RM$', 0
+	rm db 'RM$'
 	
-	back db 'Enter 0 to return: $', 0
+	back db 'Enter 0 to return: $'
 	
 	
 	; View Cart
@@ -146,38 +148,39 @@
 	
 	; Exit messages
     quitPrompt db 'Do you want to quit? (Y/N): $'
-    quitMsg db 'Goodbye!$', 0
+    quitMsg db 'Goodbye!$'
 
 .code
 main proc
-    ; Initialize data segment
     mov ax, @data
     mov ds, ax
 	
 	call clearScreen
 
-    ; Display Welcome Message using LEA
+	; display welcome message
     lea dx, welcomeMsg
     mov ah, 09h
     int 21h
 
+; menu for login or quit
 main_menu_start:
-    ; Display initial options
 	call newline
 
+	; display option 1
     lea dx, option1
     mov ah, 09h
     int 21h
 
 	call newline
 
+	; display option 2
     lea dx, option0
     mov ah, 09h
     int 21h
 
-    ; Prompt for option
 	call newline
 
+	; ask to choose option
     lea dx, chooseOption
     mov ah, 09h
     int 21h
@@ -185,23 +188,24 @@ main_menu_start:
     ; Get user input for option
     mov ah, 01h
     int 21h
-    sub al, '0'           ; Convert ASCII to integer
+    sub al, 30h
     mov optionBuffer, al
 
-    ; Check user selection
+    ; validation
     cmp optionBuffer, 1
-    je login_loop          ; Jump to login if '1' is selected
+    je login_loop          ; Jump to login if 1
 
     cmp optionBuffer, 0
-    je quit_system1         ; Jump to quit if '0' is selected
+    je quit_system1         ; Jump to quit if 0
 
-    ; If invalid, show error and loop
+    ; If invalid
 	call clearScreen
 	
+	; display invalid message
     lea dx, invalidOption
     mov ah, 09h
     int 21h
-    jmp main_menu_start
+    jmp main_menu_start		; jump back
 
 quit_system1:
 	jmp quit_system
@@ -209,62 +213,65 @@ quit_system1:
 login_loop:
 	call newline
 	
-    ; Ask for Username
+    ; Ask for Username: 'admin'
     lea dx, loginPrompt
     mov ah, 09h
     int 21h
 
-    ; Initialize input buffer
-    mov byte ptr inputBuffer+1, 0   ; Clear the number of characters read
+    ; input string
     lea dx, inputBuffer
     mov ah, 0Ah
     int 21h
-
-    ; Strip trailing carriage return from username input
-    mov cl, byte ptr [inputBuffer+1]  ; CX = number of characters entered
-    lea si, inputBuffer+2           ; Start of actual input
-    add si, cx                      ; SI points to end of input
-    dec si                          ; SI points to the last character (carriage return)
-    cmp byte ptr [si], 0Dh          ; Check if it's a carriage return
-    jne no_cr                       ; If not, skip stripping
-    mov byte ptr [si], 0            ; Replace carriage return with null terminator
-no_cr:
-
-    ; Compare Username
-    lea si, inputBuffer+2           ; Start of actual input
-    lea di, username                ; Predefined username
-    call compareStrings
-    jnz login_fail                  ; If not equal, jump to login failure
+	
+	; compare the input lenght
+	mov al, inputbuffer[1]
+	cmp al, 5 
+	jne not_matched
+	
+	
+	lea si, inputbuffer+2	; the input start with index 2
+    lea di, username	
+    mov cx, 5  
+	
+	; loop to compare user
+	compare_user:
+		mov al, [si]
+		cmp al, [di]
+		jne not_matched
+		inc si                      
+		inc di
+		loop compare_user       
 
 	call newline
 	
-    ; Ask for Password
+    ; Ask for Password: 'pass'
     lea dx, passPrompt
     mov ah, 09h
     int 21h
-
-    ; Initialize input buffer again for password
-    mov byte ptr inputBuffer+1, 0   ; Clear the number of characters read
-    lea dx, inputBuffer
-    mov ah, 0Ah
+	
+	; input string
+	mov ah, 0ah             
+    lea dx, inputbuffer     
     int 21h
-
-    ; Strip trailing carriage return from password input
-    mov cl, inputBuffer+1           ; CX = number of characters entered
-    lea si, inputBuffer+2           ; Start of actual input
-    add si, cx                      ; SI points to end of input
-    dec si                          ; SI points to the last character (carriage return)
-    cmp byte ptr [si], 0Dh          ; Check if it's a carriage return
-    jne no_cr_pw                    ; If not, skip stripping
-    mov byte ptr [si], 0            ; Replace carriage return with null terminator
-no_cr_pw:
-
-    ; Compare Password
-    lea si, inputBuffer+2           ; Start of actual input
-    lea di, password                ; Predefined password
-    call compareStrings
-    jnz login_fail                  ; If not equal, jump to login failure
-
+	
+	; check the input length 
+    mov al, inputbuffer[1]     
+    cmp al, 4                  
+    jne not_matched
+	
+	lea si, inputbuffer+2   
+    lea di, password        
+    mov cx, 4
+	
+	; loop to compare password
+	compare_password:
+		mov al, [si]                
+		cmp al, [di]                
+		jne not_matched              
+		inc si                      
+		inc di                      
+		loop compare_password        
+	
 	call clearScreen
 	
     ; Display login successful message
@@ -273,17 +280,16 @@ no_cr_pw:
     int 21h
     jmp main_menu
 	
-login_fail:
+not_matched:
 	call clearScreen
 	
     ; Display login failure message
     lea dx, loginFail
     mov ah, 09h
     int 21h
+	call newline
     
     ; Ask user to continue or exit program
-	call newline
-
 	; try again
     lea dx, option2
     mov ah, 09h
@@ -295,10 +301,10 @@ login_fail:
     lea dx, option0
     mov ah, 09h
     int 21h
-
-    ; Prompt for option
+	
 	call newline
 
+	; Prompt for option
     lea dx, chooseOption
     mov ah, 09h
     int 21h
@@ -306,18 +312,18 @@ login_fail:
     ; Get user input for option
     mov ah, 01h
     int 21h
-    sub al, '0'           ; Convert ASCII to integer
+    sub al, 30h
     mov optionBuffer, al
 
     ; Check user selection
     cmp optionBuffer, 1
-    je login_loop2          ; Jump to login if '1' is selected
+    je login_loop2          ; Jump to login if 1
 
     cmp optionBuffer, 0
-    je quit_system2         ; Jump to quit if '0' is selected
+    je quit_system2         ; Jump to quit if 0
 
-    ; If the user doesn't select valid options, retry
-    jmp login_fail
+    ; invalid option, loop
+    jmp not_matched
 	
 login_loop2:
 	jmp login_loop
@@ -373,40 +379,64 @@ main_menu:
 	; Get user input for option
 	mov ah, 01h
 	int 21h
-	sub al, '0'           ; Convert ASCII to integer
+	sub al, 30h
 	mov optionBuffer, al
-
-	; Check user selection and call the appropriate function
-	cmp optionBuffer, 1
+	
 	call clearScreen
-	jne skip_view_items_function
-	jmp far ptr view_items_function
-	skip_view_items_function:
+
+	; Check user selection and call function
+	cmp optionBuffer, 1
+	je view_items_function1
+	;call clearScreen
+	;jne skip_view_items_function
+	;jmp far ptr view_items_function
+	;skip_view_items_function:
 	
 	cmp optionBuffer, 2
-	jne skip_add_item_function
-	jmp far ptr add_item_function
-	skip_add_item_function:
+	je add_item_function1
+	;jne skip_add_item_function
+	;jmp far ptr add_item_function
+	;skip_add_item_function:
 	
 	cmp optionBuffer, 3
-	jne skip_view_cart_function
-	jmp far ptr view_cart_function
-	skip_view_cart_function:
+	je view_cart_function1
+	;jne skip_view_cart_function
+	;jmp far ptr view_cart_function
+	;skip_view_cart_function:
 
 	cmp optionBuffer, 4
-	jne skip_remove_item_function
-	jmp far ptr remove_item_function
-	skip_remove_item_function:
+	je remove_item_function1
+	;jne skip_remove_item_function
+	;jmp far ptr remove_item_function
+	;skip_remove_item_function:
 
 	cmp optionBuffer, 5
-	jne skip_checkout
-	jmp far ptr checkout
-	skip_checkout:
+	je checkout1
+	;jne skip_checkout
+	;jmp far ptr checkout
+	;skip_checkout:
 
 	cmp optionBuffer, 0
-	jne invalid_input
-	jmp far ptr main1
+	je main1
+	;jne invalid_input
+	;jmp far ptr main1
 
+	jmp invalid_input
+	
+view_items_function1:
+	jmp view_items_function
+	
+add_item_function1:
+	jmp add_item_function
+	
+view_cart_function1:
+	jmp view_cart_function
+	
+remove_item_function1:
+	jmp remove_item_function
+	
+checkout1:
+	jmp checkout
 
 main1:
     ; Display logout successful message
@@ -524,10 +554,13 @@ display_amount proc
 		ret
 display_amount endp
 
-add_item_function proc far
-
+add_item_function proc
     ; Display the list of items
     call far ptr view_items_function
+	
+	mov ah, 09h
+	lea dx, multLines12
+	int 21h
 
     ; Prompt the user to select an item
     lea dx, selectItem
@@ -820,7 +853,7 @@ add_item_function proc far
 add_item_function endp
 
 ; no.   quantity   product name   price (per unit)  total prices
-view_cart_function proc far
+view_cart_function proc
     ; Check if the cart is empty
     cmp numProduct, 0
     je cart_empty1
@@ -1327,6 +1360,11 @@ view_cart_function proc far
 			add dl, 30h
 			int 21h
 			
+			
+			mov ah, 09h
+			lea dx, multLines6
+			int 21h
+			
 		cmp viewCart, 'v'
 		je back_cart
 		
@@ -1344,7 +1382,7 @@ view_cart_function proc far
 		jmp main_menu
 view_cart_function endp
 
-remove_item_function proc far
+remove_item_function proc
     mov viewCart, 'v'
 	call view_cart_function
 	
@@ -1478,7 +1516,7 @@ remove_item_function proc far
 		jmp main_menu
 remove_item_function endp
 
-checkout proc far
+checkout proc
     mov viewCart, 'v'
 	call view_cart_function
 	
@@ -1667,27 +1705,6 @@ quit_now:
     mov ah, 4Ch
     int 21h
 
-
-; Subroutine to compare strings
-compareStrings:
-    push cx                        ; Save CX
-compare_loop:
-    lodsb                          ; Load byte from [SI] into AL and increment SI
-    cmp al, [di]                   ; Compare AL with the byte at [DI]
-    jne not_equal                  ; If they are not equal, jump to not_equal
-    inc di                         ; Increment DI to move to the next character in username or password
-    cmp al, 0                      ; Check if end of string (null terminator)
-    jz equal                       ; If end of string is reached, strings are equal
-    loop compare_loop              ; Loop until all characters are compared
-equal:
-    xor ax, ax                     ; Clear AX to indicate equality (AX = 0)
-    pop cx                         ; Restore CX
-    ret
-
-not_equal:
-    mov ax, 1                      ; Set AX to 1 to indicate inequality
-    pop cx                         ; Restore CX
-    ret
 
 main endp
 end main
