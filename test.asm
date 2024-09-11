@@ -1483,9 +1483,9 @@ modify_item_quantity proc
 	validation_modify_quantity:
 		mov quantitySelected, al
 		
-		cmp quantityBuffer, 1
+		cmp quantitySelected, 1
 		jl invalid_modify_quantity
-		cmp quantityBuffer, 10
+		cmp quantitySelected, 10
 		jg invalid_modify_quantity
 		
 		; if valid
@@ -1534,7 +1534,6 @@ modify_item_quantity proc
 		
 		loop_modify:
 			mov al, [si]
-			mov ah, [di]
 			
 			cmp indexSelectedItem, al
 			jne skip_modify_item
@@ -1546,12 +1545,12 @@ modify_item_quantity proc
 			
 			skip_modify_item:
 			add di, 2
+			add si, 2
 			
 			loop loop_modify
 		
-		call clearScreen
-		
 		success_modify:
+			call clearScreen
 			mov ah, 09h
 			lea dx, successModify
 			int 21h
@@ -1660,6 +1659,9 @@ remove_item_function proc
 			add di, 2
 			
 			loop loop_remove
+			
+		cmp numProduct, 0
+		je empty_cart
 		
 		xor cx, cx
 		mov cx, numProduct
@@ -1684,6 +1686,25 @@ remove_item_function proc
 			add di, 2
 			
 			loop loop1
+		
+		jmp skip_empty_cart
+			
+		empty_cart:
+			; clear all data from cart
+			mov di, offset cartItems
+			mov di, offset cartQuantities
+			mov cx, 10
+			
+			clear_cart_loop:
+				xor bx, bx
+				mov [di], bx
+				mov [si], bx
+				
+				add di, 2
+				add si, 2
+			loop clear_cart_loop
+		
+		skip_empty_cart:
 		
 		call clearScreen
 		
