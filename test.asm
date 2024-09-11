@@ -30,10 +30,11 @@
 	
 	; Main menu options
     menuOption1 db '1. View All Products$'
-    menuOption2 db '2. Add Item to Cart$'
+    menuOption2 db '2. Add (Order) Item to Cart$'
     menuOption3 db '3. View Cart$'
-    menuOption4 db '4. Remove Item from Cart$'
-    menuOption5 db '5. Checkout$'
+    menuOption4 db '4. Modify Quantity from Cart$'
+    menuOption5 db '5. Remove Item from Cart$'
+    menuOption6 db '6. Checkout$'
     menuOption0 db '0. Logout$'
     invalidOption db 'Invalid option, please choose again$'
 	
@@ -125,6 +126,13 @@
 	addSuccessMsg db 'Product added successfully!$'
 	addMorePrompt db 'Do you want to add more products? (Y/N): $'
 
+
+	; modify item
+	selectModifyPrompt db 'Select an item to modify quantity (enter 0 to exit): $'
+	quantitySelection db 'How many quantity you want to change: $'
+	quantitySelected db ?
+	modifyPrompt db 'Are you sure to modify the quantity of item (Y/N):$'
+	successModify db 'Successfully Modify Item Quantity From Cart!$'
 	
 	; remove cart
 	cartItemsTemp dw 10 dup(0)		  ; indexes of item in cart
@@ -137,14 +145,9 @@
 
 	; checkout
 	checkoutPrompt db 'Are you sure to make payment (Y/N):$'
+	checkoutCanceled db 'Checkout canceled!$'
+	successfulCheckout db 'Successfully Checkout!$'
 	
-	; file
-	fileName db 'receipt.txt$'
-	handle dw ?
-	file_success_msg db 'Successfully store in receipt.txt$'
-	dot db '.$'
-	loopNum db 0
-	cartNumStr db '1$'
 	
 	; Exit messages
     quitPrompt db 'Do you want to quit? (Y/N): $'
@@ -364,6 +367,12 @@ main_menu:
     int 21h
 
 	call newline
+	
+	lea dx, menuOption6
+	mov ah, 09h
+	int 21h
+	
+	call newline
 
     lea dx, menuOption0
     mov ah, 09h
@@ -387,39 +396,24 @@ main_menu:
 	; Check user selection and call function
 	cmp optionBuffer, 1
 	je view_items_function1
-	;call clearScreen
-	;jne skip_view_items_function
-	;jmp far ptr view_items_function
-	;skip_view_items_function:
 	
 	cmp optionBuffer, 2
 	je add_item_function1
-	;jne skip_add_item_function
-	;jmp far ptr add_item_function
-	;skip_add_item_function:
 	
 	cmp optionBuffer, 3
 	je view_cart_function1
-	;jne skip_view_cart_function
-	;jmp far ptr view_cart_function
-	;skip_view_cart_function:
 
 	cmp optionBuffer, 4
-	je remove_item_function1
-	;jne skip_remove_item_function
-	;jmp far ptr remove_item_function
-	;skip_remove_item_function:
+	je modify_item_quantity1
 
 	cmp optionBuffer, 5
+	je remove_item_function1
+
+	cmp optionBuffer, 6
 	je checkout1
-	;jne skip_checkout
-	;jmp far ptr checkout
-	;skip_checkout:
 
 	cmp optionBuffer, 0
 	je main1
-	;jne invalid_input
-	;jmp far ptr main1
 
 	jmp invalid_input
 	
@@ -431,6 +425,9 @@ add_item_function1:
 	
 view_cart_function1:
 	jmp view_cart_function
+	
+modify_item_quantity1:
+	jmp modify_item_quantity
 	
 remove_item_function1:
 	jmp remove_item_function
@@ -459,105 +456,104 @@ invalid_input:
     jmp main_menu
 
 view_items_function proc far
+
+	; store optionBBuffer for check the selection from main menu
 	mov bl, optionBuffer
 	mov opt, bl
 	
-	l1:
-		; Display the list of items with their prices
+	
+	mov cx, 10                
+	lea di, itemArray
+	lea si, prices
+	
+	; loop
+	display_loop:
+		; display product name
+		mov bx, [di]
+		lea dx, [bx]
+		mov ah, 09h       
+		int 21h
+		
+		; display price
+		mov bl, [si]
+		
+		; Display 'RM'
+		lea dx, rm
+		mov ah, 09h
+		int 21h
+		
+		mov dl, ' '
+		mov ah, 02h
+		int 21h
 
-		mov cx, 10                
-		lea di, itemArray
-		lea si, prices  ; Start SI at the beginning of the prices array
+		; 2 digits
+		mov ax, 0
+		mov al, bl
+		DIV ten
 
-		display_loop:
-			mov bx, [di]      
-			lea dx, [bx]      
-			mov ah, 09h       
-			int 21h    
-			call display_price
+		mov bh, ah
+		
+		mov dl, al
+		cmp dl, 0
+		je display_space
+		
+		; display ten-digit
+		add dl, 30h
+		mov ah, 02h
+		int 21h
+		
+		jmp next_digit
+		
+		display_space:
+			mov dl, ' '
+			mov ah, 02h
+			int 21h
+
+		next_digit:
+			; display the single-digit
+			mov dl, bh
+			add dl, 30h
+			mov ah, 02h
+			int 21h
+
+			; Display '.'
+			mov dl, '.'
+			mov ah, 02h
+			int 21h
+
+			; Display '0'
+			mov dl, '0'
+			mov ah, 02h
+			int 21h
+
+			; Display '0'
+			mov dl, '0'
+			mov ah, 02h
+			int 21h
+			
 			call newline      
 			inc si
 			add di, 2         
 		loop display_loop 
-		call newline	
 		
-		; if jump from menu
-		cmp opt, 1
-		je main_menu1
-		ret
+	call newline	
+
+	; if jump from menu, or return back to function calling
+	cmp opt, 1
+	je main_menu1
+	
+	ret
 		
 	main_menu1:
 		jmp main_menu
 
 view_items_function endp
 
-display_price proc
-    ; Display the price in RM format
-    mov bl, [si]         ; Load the price from the prices array (pointed to by SI)
-    call display_amount  ; Display the amount (converts to RM format)
-    ret
-display_price endp
-
-display_amount proc
-
-    ; Display 'RM'
-    lea dx, rm
-    mov ah, 09h
-    int 21h
-	
-	mov dl, ' '
-    mov ah, 02h
-    int 21h
-
-	; 2 digits
-	mov ax, 0
-	mov al, bl
-	DIV ten
-
-	mov bh, ah
-	
-	mov dl, al
-	cmp dl, 0
-	je display_space
-	add dl, 30h
-	mov ah, 02h
-	int 21h
-	jmp next_digit
-	
-	display_space:
-		mov dl, ' '
-		mov ah, 02h
-		int 21h
-
-	next_digit:
-
-		mov dl, bh
-		add dl, 30h
-		mov ah, 02h
-		int 21h
-
-		; Display '.'
-		mov dl, '.'
-		mov ah, 02h
-		int 21h
-
-		; Display '0'
-		mov dl, '0'
-		mov ah, 02h
-		int 21h
-
-		; Display '0'
-		mov dl, '0'
-		mov ah, 02h
-		int 21h
-
-		ret
-display_amount endp
-
 add_item_function proc
     ; Display the list of items
-    call far ptr view_items_function
+    call view_items_function
 	
+	; make the product at upper
 	mov ah, 09h
 	lea dx, multLines12
 	int 21h
@@ -571,7 +567,7 @@ add_item_function proc
 	xor ax, ax
     mov ah, 01h
     int 21h
-    sub al, '0'  
+    sub al, 30h 	; change to digit
     mov bl, al  
 	
 	; second digit 
@@ -579,12 +575,13 @@ add_item_function proc
 	mov ah, 01h
     int 21h
 	
-	cmp al, 0Dh 	; press enter 
+	cmp al, 0Dh 	; jump if press enter
 	je one_digit
 	
-    sub al, '0'
+    sub al, 30h
 	mov bh, al
 	
+	; multiply the ten-digit by 10
 	two_digits:
 		mov al, bl
 		
@@ -600,8 +597,8 @@ add_item_function proc
 	one_digit:
 		mov selectedItem, bl
 	
+	; Validate item selection
 	validate:
-		; Validate item selection
 		cmp selectedItem, 0
 		je return_back
 		cmp selectedItem, 1
@@ -609,6 +606,7 @@ add_item_function proc
 		cmp selectedItem, 10
 		jg invalid_item_selection1
 		
+		; if no problem
 		jmp store_array
 		
 	return_back:
@@ -626,17 +624,22 @@ add_item_function proc
 		; Check if the product is already in the cart
 		cmp numProduct, 0
 		je not_found
-		mov cx, [numProduct]    ; CX stores the number of products in the cart
+		
+		mov cx, [numProduct]  
 		mov si, offset cartItems
-		xor bx, bx              ; Clear BX for the selected item index
+		xor bx, bx
 		mov bl, selectedItem
 
+	; check the selected item whether in the array
 	check_existing_product:
-		cmp [si], bl            ; Compare selected item index with cartItems
-		je found_existing1      ; If found, jump to update quantity
-		inc indexSelectedItem	; increase the index
-		add si, 2               ; Move to the next item in cartItems
+		cmp [si], bl
+		je found_existing1      ; If found
+		
+		inc indexSelectedItem	; increase the index of the product array
+		add si, 2               ; Move to the next item in cartItems (2 bytes)
 		loop check_existing_product
+		
+		; if not found
 		jmp not_found
 		
 	found_existing1:
@@ -646,15 +649,17 @@ add_item_function proc
 		; If not found in the cart, add it as a new item
 		mov si, offset cartItems
 		
+		; multiply number of product by 2 (array is 2 bytes)
 		xor bx, bx
 		mov bx, numProduct
 		shl bx, 1
 		
-		add si, bx    ; Move to the position to add the new product
+		; store to array
+		add si, bx    ; Move to the position by add the number of product
 		mov bl, selectedItem
-		mov [si], bl            ; Store the selected item index
+		mov [si], bl            ; Store the selected item index to array
 
-		; Add the product quantity
+		; prompt product quantity
 		lea dx, quantityPrompt
 		mov ah, 09h
 		int 21h
@@ -663,18 +668,20 @@ add_item_function proc
 		; first character
 		mov ah, 01h
 		int 21h
-		sub al, '0'            ; Convert ASCII to integer
+		sub al, 30h
 		mov bl, al  
 		
 		; second character
 		mov ah, 01h
 		int 21h
-		cmp al, 0Dh		; press enter
+		
+		cmp al, 0Dh		; if press enter
 		je single_digit
 		
 		; 2 digits
 		sub al, '0'
 		
+		; multiply 10
 		mov bh, ten
 		mul bh
 		add al, bl
@@ -684,15 +691,16 @@ add_item_function proc
 		single_digit:
 			mov al, bl
 
+		; Check if the quantity is valid
 		validation:
 			mov quantityBuffer, al
 			
-			; Check if the quantity is valid
 			cmp quantityBuffer, 1
 			jl invalid_jmp
 			cmp quantityBuffer, 10
 			jg invalid_jmp
 			
+			; if valid
 			jmp store_quan
 		
 	invalid_jmp:
@@ -702,18 +710,19 @@ add_item_function proc
 		; Store the quantity in the cartQuantities array
 		mov di, offset cartQuantities
 		
+		; number of product multiply 2
 		xor bx, bx
 		mov bx, numProduct
 		shl bx, 1
 		
-		add di, bx    ; Move to the position to store the quantity
+		add di, bx    ; Move to the position by adding number of product
 		mov [di], al        ; Store the quantity
 
 		; Increment the number of products in the cart
 		add numProduct, 1
 
+	; Display confirmation
 	success:
-		; Display confirmation and ask if the user wants to add more products
 		call clearScreen
 		
 		lea dx, addSuccessMsg
@@ -722,6 +731,7 @@ add_item_function proc
 		
 		call newline
 		
+	; ask if the user wants to add more products
 	add_more_prompt:
 		lea dx, addMorePrompt
 		mov ah, 09h
@@ -736,10 +746,12 @@ add_item_function proc
 		je add_item_jmp
 		jmp add_return
 
+	; add more
 	add_item_jmp:
 		call clearScreen
 		jmp add_item_function
 		
+	; return back
 	add_return:
 		; If 'N' or 'n', return to main menu
 		cmp al, 'N'
@@ -753,29 +765,31 @@ add_item_function proc
 	main_menu_return1:
 		jmp main_menu_return
 
+	; if found existing of the selected product in the cart
 	found_existing:
-		; Update the quantity if the item already exists in the cart
 		
+		; prompt quantity
 		lea dx, quantityPrompt
 		mov ah, 09h
 		int 21h
 		
-		; first character
+		; user input
+		; get first character
 		mov ah, 01h
 		int 21h
-		sub al, '0'            ; Convert ASCII to integer
+		sub al, 30h
 		mov bl, al  
 		
-		; second character
+		; get second character
 		mov ah, 01h
 		int 21h
-		cmp al, 0Dh		; press enter
+		cmp al, 0Dh		; if press enter
 		je single_digit2
 		
 		call newline
 		
 		; 2 digits
-		sub al, '0'
+		sub al, 30h
 		
 		mov bh, ten
 		mul bh
@@ -786,15 +800,16 @@ add_item_function proc
 		single_digit2:
 			mov al, bl
 		
+		; Check if the quantity is valid
 		validation2:
 			mov quantityBuffer, al
 			
-			; Check if the quantity is valid
 			cmp quantityBuffer, 1
 			jl invalid_jmp1
 			cmp quantityBuffer, 10
 			jg invalid_jmp1
 			
+			; if valid
 			jmp store_array2
 
 		invalid_jmp1:
@@ -804,16 +819,18 @@ add_item_function proc
 		; Update the quantity in the cartQuantities array
 		mov di, offset cartQuantities
 		
+		; the position of the selected item in the cart array
 		xor bx, bx
-		mov bl, indexSelectedItem
+		mov bl, indexSelectedItem		
 		shl bl, 1
 		
-		add di, bx         				  ; Move to the correct position in the cartQuantities array
+		add di, bx         				  ; Move to the correct position
 		mov bl, [di]
-		add bl, quantityBuffer                        ; Add the new quantity to the existing quantity
-		mov [di], bl                      ; Store the updated quantity back into the cart array
+		add bl, quantityBuffer            ; Add the new quantity to the existing quantity
+		mov [di], bl                      ; Store the updated quantity
 		
-		jmp main_menu_return              ; Return to main menu
+		; Return to main menu
+		jmp main_menu_return              
 
 	invalid_more_input:
 		call clearScreen
@@ -852,7 +869,7 @@ add_item_function proc
 
 add_item_function endp
 
-; no.   quantity   product name   price (per unit)  total prices
+; no.  | quantity  | product name  | price (per unit) | total prices
 view_cart_function proc
     ; Check if the cart is empty
     cmp numProduct, 0
@@ -864,13 +881,14 @@ view_cart_function proc
 		jmp cart_empty
 		
 	display:
-		; Display message
+		; Display header
 		lea dx, viewCartMsg
 		mov ah, 09h
 		int 21h
 		
 		call newline
 		
+		; display line (design)
 		lea dx, viewCartLine
 		mov ah, 09h
 		int 21h 
@@ -886,9 +904,10 @@ view_cart_function proc
 		mov numCart, 1
 		mov totalCartPrice, 0
 		
+		; loop for display item in cart
 		display_cart_loop:
 			
-			; display number
+			; display number by ascending (1. )
 			mov dl, numCart
 			add dl, 30h
 			mov ah, 02h
@@ -904,13 +923,14 @@ view_cart_function proc
 			
 			
 			
-			; display quantity
+			; display quantity of the item
 			xor ax, ax
 			mov ax, [di]
 			mov quantityBuffer, al
 			cmp al, 10
-			jl one_digit_quantity
-			
+			jl one_digit_quantity 	; if just a digit
+
+			; for 2 digit
 			mov ah, 0
 			div ten
 			mov bx, ax
@@ -927,7 +947,8 @@ view_cart_function proc
 			
 			jmp display_product_name
 			
-				one_digit_quantity:
+			; display a digit
+			one_digit_quantity:
 				mov dl, al
 				add dl, 30h
 				mov ah, 02h
@@ -942,17 +963,18 @@ view_cart_function proc
 			int 21h
 			
 			
-			
+			; display prodcut name
 			display_product_name:
 			xor ax, ax
 			xor bx, bx
+			
 			
 			mov bx, offset productArray
 			mov ax, [si]
 			shl ax, 1 			 ; multiply 2 (2 bytes)
 			add bx, ax
 			
-			; display
+			; display string
 			mov dx, [bx]
 			mov ah, 09h
 			int 21h
@@ -1002,20 +1024,20 @@ view_cart_function proc
 			jmp second_digit
 			
 			first_digit:
-			mov dl, ' '
-			mov ah, 02h
-			int 21h
+				mov dl, ' '
+				mov ah, 02h
+				int 21h
 			
 			second_digit:
-			mov dl, bh
-			add dl, 30h
-			mov ah, 02h
-			int 21h
-			
-			; display .00
-			mov ah, 09h
-			lea dx, zero
-			int 21h
+				mov dl, bh
+				add dl, 30h
+				mov ah, 02h
+				int 21h
+				
+				; display .00
+				mov ah, 09h
+				lea dx, zero
+				int 21h
 			
 			lea dx, spaces4
 			mov ah, 09h
@@ -1023,7 +1045,7 @@ view_cart_function proc
 			
 			
 			
-			; display total price for each item
+			; display subtotal for each item
 			mov al, priceBuffer
 			mul quantityBuffer
 			
@@ -1338,7 +1360,7 @@ view_cart_function proc
 			mov ah, 02h
 			int 21h
 			
-			;display floating point
+			; display floating point
 			mov dl, '.'
 			mov ah, 02h
 			int 21h
@@ -1381,6 +1403,162 @@ view_cart_function proc
 		int 21h
 		jmp main_menu
 view_cart_function endp
+
+modify_item_quantity proc
+	; pass in 'v' to the function
+	mov viewCart, 'v'
+	call view_cart_function
+	
+	call newline
+	call newline
+	
+	; get number of item from user
+	mov ah, 09h
+	lea dx, selectModifyPrompt
+	int 21h
+	
+	; input
+	mov ah, 01h
+	int 21h
+	sub al, 30h
+	
+	mov cx, numProduct
+	
+	; not exist
+	cmp cl, al
+	jge exist_modify
+	
+	call clearScreen
+	
+	mov ah, 09h
+	lea dx, error_remove	; message for item doesn't exist
+	int 21h
+	
+	jmp main_menu
+	
+	exist_modify:
+	
+	; exit
+	cmp al, 0
+	je cancel_modify
+	
+	dec al
+	mov indexSelectedItem, al
+	
+	call newline
+	
+	; get quantity from user
+	mov ah, 09h
+	lea dx, quantitySelection
+	int 21h
+	
+	; user input
+	; get first character
+	mov ah, 01h
+	int 21h
+	sub al, 30h
+	mov bl, al  
+	
+	; get second character
+	mov ah, 01h
+	int 21h
+	cmp al, 0Dh		; if press enter
+	je single_digit3
+	
+	call newline
+	
+	; 2 digits
+	sub al, 30h
+	
+	mov bh, ten
+	mul bh
+	add al, bl
+	
+	jmp validation_modify_quantity
+	
+	single_digit3:
+		mov al, bl
+	
+	; Check if the quantity is valid
+	validation_modify_quantity:
+		mov quantitySelected, al
+		
+		cmp quantityBuffer, 1
+		jl invalid_modify_quantity
+		cmp quantityBuffer, 10
+		jg invalid_modify_quantity
+		
+		; if valid
+		jmp modify_quantity
+	
+	invalid_modify_quantity:
+		call clearScreen
+		lea dx, invalidQuantityMsg
+		mov ah, 09h
+		int 21h
+	
+	modify_quantity:
+	call newline
+	
+	; confirmation for modify
+	mov ah, 09h
+	lea dx, modifyPrompt
+	int 21h
+	
+	xor al, al
+	mov ah, 01h
+	int 21h
+	
+	validate_modify:
+		cmp al, 'y'
+		jmp modify
+		cmp al, 'Y'
+		jmp modify
+		cmp al, 'n'
+		jmp cancel_modify
+		cmp al, 'N'
+		jmp cancel_modify
+	
+	jmp validate_modify
+	
+	cancel_modify:
+		call clearScreen
+		jmp main_menu
+		
+	modify:
+		xor cx, cx
+		mov cx, numProduct
+		
+		mov si, offset cartItems
+		mov di, offset cartQuantities
+		
+		loop_modify:
+			mov al, [si]
+			mov ah, [di]
+			
+			cmp indexSelectedItem, al
+			jne skip_modify_item
+
+			; change the quantity of the selected item
+			mov bl, quantitySelected
+			mov [di], bl
+			jmp success_modify
+			
+			skip_modify_item:
+			add di, 2
+			
+			loop loop_modify
+		
+		call clearScreen
+		
+		success_modify:
+			mov ah, 09h
+			lea dx, successModify
+			int 21h
+		
+		jmp main_menu
+
+modify_item_quantity endp
 
 remove_item_function proc
     mov viewCart, 'v'
@@ -1534,127 +1712,51 @@ checkout proc
 	int 21h
 	
 	cmp al, 'y'
-	je store_file
+	je clear_cart
 	cmp al, 'Y'
-	je store_file
+	je clear_cart
+	cmp al, 'n'
+	je cancel_checkout
+	cmp al, 'N'
+	je cancel_checkout
 	
+	; invalid
 	call clearScreen
-	jmp main_menu
+	jmp checkout
 	
-	store_file:
-	; open file
-	mov ah, 3Ch
-	mov al, 0
-	lea dx, fileName
-	int 21h
-	mov handle, ax 
-	
-	
-	
-	; Write to file
-	
-	mov ah, 40h
-	mov bx, handle
-	lea dx, viewCartMsg
-	mov cx, 76
-	int 21h
-
-	; new line
-	mov ah, 40h
-	mov bx, handle
-	lea dx, newlines
-	mov cx, 2
-	int 21h
-	
-	mov ah, 40h
-	mov bx, handle
-	lea dx, viewCartLine
-	mov cx, 76
-	int 21h
-	
-	; new line
-	mov ah, 40h
-	mov bx, handle
-	lea dx, newlines
-	mov cx, 2
-	int 21h
-	
-	xor cx, cx
-	mov cx, numProduct
-	mov loopNum, cl
-	
-	mov si, offset cartItems
-	mov di, offset cartQuantities 
-	
-	file_cart_loop:
-		; write number
-		mov ah, 40h
-		mov bx, handle
-		lea dx, cartNumStr
-		mov cx, 1
-		int 21h
-	
-		mov ah, 40h
-		mov bx, handle
-		lea dx, dot
-		mov cx, 1
-		int 21h
-	
-		mov ah, 40h
-		mov bx, handle
-		lea dx, spaces
-		mov cx, 4
+	; back to main menu
+	cancel_checkout:
+		call clearScreen
+		
+		mov ah, 09h
+		lea dx, checkoutCanceled
 		int 21h
 		
-		
-		; write quantity
-		xor ax, ax
-		mov ax, [di]
-		mov quantityBuffer, al
-		
-		mov ah, 40h
-		mov bx, handle
-		lea dx, quantityBuffer
-		mov cx, 1
-		int 21h
-		
-		lea dx, spaces2
-		mov ah, 40h
-		mov cx, 9
-		int 21h
-		
-			
-		display_product_name_file:
-		
-		; new line
-		mov ah, 40h
-		mov bx, handle
-		lea dx, newlines
-		mov cx, 2
-		int 21h
+		jmp main_menu
 	
-		dec loopNum
-		cmp loopNum, 0
-		jne file_cart_loop1
-	
-		jmp close_file
-	
-	file_cart_loop1:
-		jmp file_cart_loop
-		
-		
-	close_file:
-	; Close file
-	mov ah, 3Eh 
-	mov bx, handle
-	int 21h
+	clear_cart:
 	
 	call clearScreen
 	
-	file_success:
 	mov ah, 09h
-	lea dx, file_success_msg
+	lea dx, successfulCheckout
 	int 21h
+	
+	; clear all data from cart
+	mov di, offset cartItems
+	mov di, offset cartQuantities
+	mov cx, 10
+	
+	clear_loop:
+		xor bx, bx
+		mov [di], bx
+		mov [si], bx
+		
+		add di, 2
+		add si, 2
+	loop clear_loop
+	
+	mov numProduct, 0
 	
 	jmp main_menu
     
