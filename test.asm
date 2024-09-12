@@ -131,6 +131,7 @@
 	selectModifyPrompt db 'Select an item to modify quantity (enter 0 to exit): $'
 	quantitySelection db 'How many quantity you want to change: $'
 	quantitySelected db ?
+	count db 0
 	modifyPrompt db 'Are you sure to modify the quantity of item (Y/N):$'
 	successModify db 'Successfully Modify Item Quantity From Cart!$'
 	
@@ -1442,8 +1443,7 @@ modify_item_quantity proc
 	cmp al, 0
 	je cancel_modify
 	
-	dec al
-	mov indexSelectedItem, al
+	mov selectedItem, al
 	
 	call newline
 	
@@ -1496,6 +1496,8 @@ modify_item_quantity proc
 		lea dx, invalidQuantityMsg
 		mov ah, 09h
 		int 21h
+		
+		jmp main_menu
 	
 	modify_quantity:
 	call newline
@@ -1511,13 +1513,13 @@ modify_item_quantity proc
 	
 	validate_modify:
 		cmp al, 'y'
-		jmp modify
+		je modify
 		cmp al, 'Y'
-		jmp modify
+		je modify
 		cmp al, 'n'
-		jmp cancel_modify
+		je cancel_modify
 		cmp al, 'N'
-		jmp cancel_modify
+		je cancel_modify
 	
 	jmp validate_modify
 	
@@ -1528,6 +1530,7 @@ modify_item_quantity proc
 	modify:
 		xor cx, cx
 		mov cx, numProduct
+		mov bh, 1
 		
 		mov si, offset cartItems
 		mov di, offset cartQuantities
@@ -1535,7 +1538,7 @@ modify_item_quantity proc
 		loop_modify:
 			mov al, [si]
 			
-			cmp indexSelectedItem, al
+			cmp selectedItem, bh
 			jne skip_modify_item
 
 			; change the quantity of the selected item
@@ -1546,6 +1549,7 @@ modify_item_quantity proc
 			skip_modify_item:
 			add di, 2
 			add si, 2
+			add bh, 1
 			
 			loop loop_modify
 		
@@ -1592,12 +1596,11 @@ remove_item_function proc
 	
 	exist:
 	
-	; exit
+	; if exit
 	cmp al, 0
 	je cancel_remove
 	
-	dec al
-	mov indexSelectedItem, al
+	mov selectedItem, al
 	
 	call newline
 	
@@ -1612,13 +1615,13 @@ remove_item_function proc
 	
 	validate_remove:
 		cmp al, 'y'
-		jmp remove
+		je remove
 		cmp al, 'Y'
-		jmp remove
+		je remove
 		cmp al, 'n'
-		jmp cancel_remove
+		je cancel_remove
 		cmp al, 'N'
-		jmp cancel_remove
+		je cancel_remove
 	
 	jmp validate_remove
 	
@@ -1628,7 +1631,9 @@ remove_item_function proc
 		
 	remove:
 		xor cx, cx
+		
 		mov cx, numProduct
+		mov count, 1
 		
 		mov si, offset cartItems
 		mov di, offset cartQuantities
@@ -1640,7 +1645,8 @@ remove_item_function proc
 			mov al, [si]
 			mov ah, [di]
 			
-			cmp indexSelectedItem, al
+			mov dl, count
+			cmp selectedItem, dl
 			je skip_remove_item
 
 			; store every item in temporary variable
@@ -1657,6 +1663,7 @@ remove_item_function proc
 			inc_add:
 			add si, 2
 			add di, 2
+			add count, 1
 			
 			loop loop_remove
 			
@@ -1664,6 +1671,7 @@ remove_item_function proc
 		je empty_cart
 		
 		xor cx, cx
+		
 		mov cx, numProduct
 		
 		mov si, offset cartItems
@@ -1687,22 +1695,27 @@ remove_item_function proc
 			
 			loop loop1
 		
+		; clear the temporary array
+		xor cx, cx
+		
+		mov di, offset cartItemsTemp 
+		mov si, offset cartQuantitiesTemp
+		
+		mov cx, 10
+		
+		call clear_cart_function
+		
 		jmp skip_empty_cart
 			
+		; clear all data from cart
 		empty_cart:
-			; clear all data from cart
+			xor cx, cx
+			
 			mov di, offset cartItems
-			mov di, offset cartQuantities
+			mov si, offset cartQuantities
 			mov cx, 10
 			
-			clear_cart_loop:
-				xor bx, bx
-				mov [di], bx
-				mov [si], bx
-				
-				add di, 2
-				add si, 2
-			loop clear_cart_loop
+			call clear_cart_function
 		
 		skip_empty_cart:
 		
@@ -1765,9 +1778,18 @@ checkout proc
 	
 	; clear all data from cart
 	mov di, offset cartItems
-	mov di, offset cartQuantities
+	mov si, offset cartQuantities
 	mov cx, 10
 	
+	call clear_cart_function
+	
+	mov numProduct, 0
+	
+	jmp main_menu
+    
+checkout endp
+
+clear_cart_function proc
 	clear_loop:
 		xor bx, bx
 		mov [di], bx
@@ -1776,12 +1798,8 @@ checkout proc
 		add di, 2
 		add si, 2
 	loop clear_loop
-	
-	mov numProduct, 0
-	
-	jmp main_menu
-    
-checkout endp
+	ret
+clear_cart_function endp
 
 clearScreen proc
 	lea dx, clearScreens
