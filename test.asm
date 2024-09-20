@@ -287,6 +287,8 @@ login_loop:
     mov ah, 09h
     int 21h
     jmp main_menu
+
+	call newline
 	
 not_matched:
 	call clearScreen
@@ -295,6 +297,7 @@ not_matched:
     lea dx, loginFail
     mov ah, 09h
     int 21h
+
 	call newline
     
     ; Ask user to continue or exit program
@@ -441,6 +444,7 @@ checkout1:
 	jmp checkout
 
 main1:
+
     ; Display logout successful message
     lea dx, logoutSucc
     mov ah, 09h
@@ -456,6 +460,8 @@ invalid_input:
     lea dx, invalidOption
     mov ah, 09h
     int 21h
+
+	call newline
 	
     ; Loop back to the input prompt or menu
     jmp main_menu
@@ -735,6 +741,7 @@ add_item_function proc
 		int 21h
 		
 		call newline
+		call newline
 		
 	; ask if the user wants to add more products
 	add_more_prompt:
@@ -845,6 +852,7 @@ add_item_function proc
 		int 21h
 		
 		call newline
+		call newline
 		
 		jmp add_item_function             ; Retry adding item
 
@@ -855,6 +863,7 @@ add_item_function proc
 		int 21h
 		
 		call newline
+		call newline
 		
 		jmp add_item_function             ; Retry item selection
 
@@ -864,6 +873,7 @@ add_item_function proc
 		mov ah, 09h
 		int 21h
 		
+		call newline
 		call newline
 		
 		jmp add_item_function             ; Retry quantity input
@@ -1139,7 +1149,6 @@ view_cart_function proc
 			call newline
 			
 			
-			
 			; display total price
 			mov ah, 09h
 			lea dx, totalStr
@@ -1210,8 +1219,7 @@ view_cart_function proc
 			
 			call newline
 			
-			
-			
+		
 			; display tax
 			mov ah, 09h
 			lea dx, taxStr
@@ -1301,7 +1309,6 @@ view_cart_function proc
 			call newline
 			
 			
-			
 			; display after tax price
 			mov ah, 09h
 			lea dx, afterTaxStr
@@ -1386,7 +1393,6 @@ view_cart_function proc
 			mov dl, bh
 			add dl, 30h
 			int 21h
-			
 			
 			mov ah, 09h
 			lea dx, multLines6
@@ -1562,6 +1568,8 @@ modify_item_quantity proc
 			mov ah, 09h
 			lea dx, successModify
 			int 21h
+
+		call newline
 		
 		jmp main_menu
 
@@ -1729,6 +1737,8 @@ remove_item_function proc
 		lea dx, successRemove
 		int 21h
 		
+		call newline
+
 		jmp main_menu
 remove_item_function endp
 
@@ -1769,6 +1779,8 @@ checkout proc
 		mov ah, 09h
 		lea dx, checkoutCanceled
 		int 21h
+
+		call newline
 		
 		jmp main_menu
 	
@@ -1779,6 +1791,8 @@ checkout proc
 	mov ah, 09h
 	lea dx, successfulCheckout
 	int 21h
+
+	call newline
 	
 	; clear all data from cart
 	mov di, offset cartItems
