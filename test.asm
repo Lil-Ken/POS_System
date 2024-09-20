@@ -19,6 +19,7 @@
 	
 	; Start messages
     welcomeMsg db '[ Welcome to the POS System ]$'
+	option8 db '[===================================]$'
     option1 db '| 1. Login$'
     option0 db '| 0. Exit Program$'
     option2 db '| 1. Try Again$'
@@ -27,19 +28,19 @@
 	; Login messages
     loginPrompt db '| Enter Username: $'
     passPrompt db '| Enter Password: $'
-    loginSucc db '[| Successfully Logged In! |]$'
-    logoutSucc db '[| Successfully Logged Out! |]$'
-    loginFail db '[| Invalid Credentials! |]$'
+    loginSucc db '[ Successfully Logged In! ]$'
+    loginFail db '[ Invalid Credentials! ]$'
 	
 	; Main menu options
+	menuOption8 db '[===================================]$'
     menuOption1 db '| 1. View All Products$'
-    menuOption2 db '| 2. Add (Order) Item to Cart$'
+    menuOption2 db '| 2. Add Item (Order) to Cart$'
     menuOption3 db '| 3. View Cart$'
     menuOption4 db '| 4. Modify Quantity from Cart$'
     menuOption5 db '| 5. Remove Item from Cart$'
     menuOption6 db '| 6. Checkout$'
     menuOption0 db '| 0. Logout$'
-    invalidOption db '[| Invalid Option, Please Select a Valid Option! |]$'
+    invalidOption db '[ Invalid Option, Please Select a Valid Option! ]$'
 	
 	; Display Items
 	item1 db '| 1. Phone Case              | $'
@@ -52,6 +53,7 @@
     item8 db '| 8. Bluetooth Speaker       | $'
     item9 db '| 9. Car Mount               | $'
     item10 db '| 10. Memory Card            | $'
+	itemBox1 db '--------------------------------------- $'
 	
 	; Item Array
 	itemArray dw offset item1
@@ -105,7 +107,7 @@
 	priceBuffer db 0
 	totalCartPrice db 0
 	taxFloatingPoint db 0
-	emptyCartMsg db '[| Your Cart is Empty! |]', 13, 10, '$'
+	emptyCartMsg db '[ Your Cart is Empty! ]', 13, 10, '$'
 	opt db ?
 	numCart db 1
 	spaces db '  | $'  ; 4 spaces
@@ -124,9 +126,9 @@
 	
 	selectItem db '| Select an Item (enter 0 to exit): $'
 	quantityPrompt db '| Enter Quantity (1-10): $'
-	invalidSelection db '[| Invalid Selection, Please Try Again |]$'
-	invalidQuantityMsg db '[| Invalid Quantity. Please Enter A Number Between 1 and 10 |]$'
-	addSuccessMsg db '[| Product added Successfully! |]$'
+	invalidSelection db '[ Invalid Selection, Please Try Again ]$'
+	invalidQuantityMsg db '[ Invalid Quantity. Please Enter A Number Between 1 and 10 ]$'
+	addSuccessMsg db '[ Product added Successfully! ]$'
 	addMorePrompt db '| Do You Want to Add More Products? (Y/N): $'
 
 
@@ -136,26 +138,26 @@
 	quantitySelected db ?
 	count db 0
 	modifyPrompt db '| Are You Sure You Want to Modify the Quantity of the Item? (Y/N):$'
-	successModify db '[| Successfully Modified Item Quantity in the Cart! |]$'
+	successModify db '[ Successfully Modified Item Quantity in the Cart! ]$'
 	
 	; remove cart
 	cartItemsTemp dw 10 dup(0)		  ; indexes of item in cart
 	cartQuantitiesTemp dw 10 dup(0)	  ; quantity of item according to index
 	selectRemoveItem db 'Select an Ttem to remove (enter 0 to exit): $'
-	error_remove db '[| Selected Item Does Not Exist! |]$'
+	error_remove db '[ Selected Item Does Not Exist! ]$'
 	removePrompt db '| Are You Sure You Want to Remove the Item? (Y/N):$'
-	successRemove db '[| Item Successfully Removed from the Cart! |]$'
+	successRemove db '[ Item Successfully Removed from the Cart! ]$'
 	viewCart db ?
 
 	; checkout
 	checkoutPrompt db '| Are You Sure You Want to Make the Payment? (Y/N):$'
-	checkoutCanceled db '[| Checkout Has Been Canceled! |]$'
-	successfulCheckout db '[| Successfully Checked Out! |]$'
+	checkoutCanceled db '[ Checkout Has Been Canceled! ]$'
+	successfulCheckout db '[ Successfully Checked Out! ]$'
 	
 	
 	; Exit messages
     quitPrompt db '| Are You Sure You Want to Quit? (Y/N): $'
-    quitMsg db '[| Goodbye! Thank You For Using Our POS System! |]$'
+    quitMsg db '[ Goodbye! Thank You For Using Our POS System! ]$'
 
 .code
 main proc
@@ -171,6 +173,13 @@ main proc
 
 ; menu for login or quit
 main_menu_start:
+	call newline
+
+	; display option 8
+	lea dx, option8
+	mov ah, 09h
+	int 21h
+
 	call newline
 
 	; display option 1
@@ -346,6 +355,12 @@ main_menu:
     ; Display Main Menu
 	call newline
 
+	lea dx, menuOption8
+	mov ah, 09h
+	int 21h
+
+	call newline
+
     lea dx, menuOption1
     mov ah, 09h
     int 21h
@@ -444,11 +459,6 @@ checkout1:
 	jmp checkout
 
 main1:
-
-    ; Display logout successful message
-    lea dx, logoutSucc
-    mov ah, 09h
-    int 21h
 	
 	jmp main
 
@@ -472,10 +482,18 @@ view_items_function proc far
 	mov bl, optionBuffer
 	mov opt, bl
 	
-	
+	call newline
+
+	lea dx, itemBox1
+	mov ah, 09h
+	int 21h
+
+	call newline
+
 	mov cx, 10                
 	lea di, itemArray
 	lea si, prices
+
 	
 	; loop
 	display_loop:
@@ -547,6 +565,11 @@ view_items_function proc far
 			add di, 2         
 		loop display_loop 
 		
+
+	lea dx, itemBox1
+	mov ah, 09h
+	int 21h
+
 	call newline	
 
 	; if jump from menu, or return back to function calling
@@ -690,12 +713,14 @@ add_item_function proc
 		je single_digit
 		
 		; 2 digits
-		sub al, '0'
+		sub al, 30h
+		mov cl, al
+		mov al, bl
 		
 		; multiply 10
 		mov bh, ten
 		mul bh
-		add al, bl
+		add al, cl
 		
 		jmp validation
 		
@@ -802,10 +827,12 @@ add_item_function proc
 		
 		; 2 digits
 		sub al, 30h
+		mov cl, al
+		mov al, bl
 		
 		mov bh, ten
 		mul bh
-		add al, bl
+		add al, cl
 		
 		jmp validation2
 		
@@ -1479,10 +1506,12 @@ modify_item_quantity proc
 	
 	; 2 digits
 	sub al, 30h
+	mov cl, al 
+	mov al, bl
 	
 	mov bh, ten
 	mul bh
-	add al, bl
+	add al, cl
 	
 	jmp validation_modify_quantity
 	
@@ -1856,14 +1885,14 @@ quit_system:
 
 quit_now:
 	call newline
+	call newline
 	
-    ; Display Goodbye message and exit
+    ; Display Good Bye message and exit
     lea dx, quitMsg
     mov ah, 09h
     int 21h
     mov ah, 4Ch
     int 21h
-
 
 main endp
 end main
