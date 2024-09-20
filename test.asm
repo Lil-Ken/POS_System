@@ -5,50 +5,53 @@
 	; Predefined data
     username db 'admin', 0
     password db 'pass', 0
+
     inputBuffer db 20, 0, 20 dup('$')
 	optionBuffer db 1 dup(?)
+
     newlines db 13, 10, '$'
 	clearScreens db 25 dup(13, 10), '$'
 	multLines12 db 12 dup(13, 10), '$'
 	multLines6 db 6 dup(13, 10), '$'
+
 	ten db 10
 	hund db 100
 	
 	; Start messages
-    welcomeMsg db 'Welcome to POS System$'
-    option1 db '1. Login$'
-    option0 db '0. Exit Program$'
-    option2 db '1. Try Again$'
-    chooseOption db 'Choose an option: $'
+    welcomeMsg db '[ Welcome to the POS System ]$'
+    option1 db '| 1. Login$'
+    option0 db '| 0. Exit Program$'
+    option2 db '| 1. Try Again$'
+    chooseOption db '| Choose an Option: $'
 	
 	; Login messages
-    loginPrompt db 'Enter Username: $'
-    passPrompt db 'Enter Password: $'
-    loginSucc db 'Login successful!$'
-    logoutSucc db 'Logout successful!$'
-    loginFail db 'Invalid credentials$'
+    loginPrompt db '| Enter Username: $'
+    passPrompt db '| Enter Password: $'
+    loginSucc db '[| Successfully Logged In! |]$'
+    logoutSucc db '[| Successfully Logged Out! |]$'
+    loginFail db '[| Invalid Credentials! |]$'
 	
 	; Main menu options
-    menuOption1 db '1. View All Products$'
-    menuOption2 db '2. Add (Order) Item to Cart$'
-    menuOption3 db '3. View Cart$'
-    menuOption4 db '4. Modify Quantity from Cart$'
-    menuOption5 db '5. Remove Item from Cart$'
-    menuOption6 db '6. Checkout$'
-    menuOption0 db '0. Logout$'
-    invalidOption db 'Invalid option, please choose again$'
+    menuOption1 db '| 1. View All Products$'
+    menuOption2 db '| 2. Add (Order) Item to Cart$'
+    menuOption3 db '| 3. View Cart$'
+    menuOption4 db '| 4. Modify Quantity from Cart$'
+    menuOption5 db '| 5. Remove Item from Cart$'
+    menuOption6 db '| 6. Checkout$'
+    menuOption0 db '| 0. Logout$'
+    invalidOption db '[| Invalid Option, Please Select a Valid Option! |]$'
 	
 	; Display Items
-	item1 db '1. Phone Case               $'
-    item2 db '2. Screen Protector         $'
-    item3 db '3. Charging Cable           $'
-    item4 db '4. Power Bank               $'
-    item5 db '5. Wireless Charger         $'
-    item6 db '6. Phone Stand              $'
-    item7 db '7. Earbuds                  $'
-    item8 db '8. Bluetooth Speaker        $'
-    item9 db '9. Car Mount                $'
-    item10 db '10. Memory Card             $'
+	item1 db '| 1. Phone Case              | $'
+    item2 db '| 2. Screen Protector        | $'
+    item3 db '| 3. Charging Cable          | $'
+    item4 db '| 4. Power Bank              | $'
+    item5 db '| 5. Wireless Charger        | $'
+    item6 db '| 6. Phone Stand             | $'
+    item7 db '| 7. Earbuds                 | $'
+    item8 db '| 8. Bluetooth Speaker       | $'
+    item9 db '| 9. Car Mount               | $'
+    item10 db '| 10. Memory Card            | $'
 	
 	; Item Array
 	itemArray dw offset item1
@@ -89,11 +92,11 @@
 	prices db 10, 8, 12, 20, 30, 10, 15, 16, 12, 20
 	rm db 'RM$'
 	
-	back db 'Enter 0 to return: $'
+	back db '| Enter 0 to return: $'
 	
 	
 	; View Cart
-	viewCartMsg db 'no. | quantity | product name          | price (per unit)     | total prices$', 13, 10
+	viewCartMsg db 'No. | Quantity | Product Name          | Price (per unit)     | Total Price$', 13, 10
 	viewCartLine db '----------------------------------------------------------------------------$', 13, 10
 	totalStr    db '                                                      Subtotal: RM$'
 	taxStr      db '                                                      Tax (6%): RM $'
@@ -102,7 +105,7 @@
 	priceBuffer db 0
 	totalCartPrice db 0
 	taxFloatingPoint db 0
-	emptyCartMsg db 'Your cart is empty.', 13, 10, '$'
+	emptyCartMsg db '[| Your Cart is Empty! |]', 13, 10, '$'
 	opt db ?
 	numCart db 1
 	spaces db '  | $'  ; 4 spaces
@@ -119,40 +122,40 @@
 	cartQuantities dw 10 dup(0)	  ; quantity of item according to index
 	numProduct dw 0
 	
-	selectItem db 'Select an item (enter 0 to exit): $'
-	quantityPrompt db 'Enter quantity (1-10): $'
-	invalidSelection db 'Invalid selection, please choose again$'
-	invalidQuantityMsg db 'Invalid quantity. Please enter a number between 1 and 10.$'
-	addSuccessMsg db 'Product added successfully!$'
-	addMorePrompt db 'Do you want to add more products? (Y/N): $'
+	selectItem db '| Select an Item (enter 0 to exit): $'
+	quantityPrompt db '| Enter Quantity (1-10): $'
+	invalidSelection db '[| Invalid Selection, Please Try Again |]$'
+	invalidQuantityMsg db '[| Invalid Quantity. Please Enter A Number Between 1 and 10 |]$'
+	addSuccessMsg db '[| Product added Successfully! |]$'
+	addMorePrompt db '| Do You Want to Add More Products? (Y/N): $'
 
 
 	; modify item
-	selectModifyPrompt db 'Select an item to modify quantity (enter 0 to exit): $'
-	quantitySelection db 'How many quantity you want to change: $'
+	selectModifyPrompt db '| Select An Item to Modify Its Quantity (Enter 0 to Exit): $'
+	quantitySelection db '| How Many Units Would You Like to Change?: $'
 	quantitySelected db ?
 	count db 0
-	modifyPrompt db 'Are you sure to modify the quantity of item (Y/N):$'
-	successModify db 'Successfully Modify Item Quantity From Cart!$'
+	modifyPrompt db '| Are You Sure You Want to Modify the Quantity of the Item? (Y/N):$'
+	successModify db '[| Successfully Modified Item Quantity in the Cart! |]$'
 	
 	; remove cart
 	cartItemsTemp dw 10 dup(0)		  ; indexes of item in cart
 	cartQuantitiesTemp dw 10 dup(0)	  ; quantity of item according to index
-	selectRemoveItem db 'Select an item to remove (enter 0 to exit): $'
-	error_remove db 'Selected item does not exist!$'
-	removePrompt db 'Are you sure to remove the item (Y/N):$'
-	successRemove db 'Successfully Remove Item From Cart!$'
+	selectRemoveItem db 'Select an Ttem to remove (enter 0 to exit): $'
+	error_remove db '[| Selected Item Does Not Exist! |]$'
+	removePrompt db '| Are You Sure You Want to Remove the Item? (Y/N):$'
+	successRemove db '[| Item Successfully Removed from the Cart! |]$'
 	viewCart db ?
 
 	; checkout
-	checkoutPrompt db 'Are you sure to make payment (Y/N):$'
-	checkoutCanceled db 'Checkout canceled!$'
-	successfulCheckout db 'Successfully Checkout!$'
+	checkoutPrompt db '| Are You Sure You Want to Make the Payment? (Y/N):$'
+	checkoutCanceled db '[| Checkout Has Been Canceled! |]$'
+	successfulCheckout db '[| Successfully Checked Out! |]$'
 	
 	
 	; Exit messages
-    quitPrompt db 'Do you want to quit? (Y/N): $'
-    quitMsg db 'Goodbye!$'
+    quitPrompt db '| Are You Sure You Want to Quit? (Y/N): $'
+    quitMsg db '[| Goodbye! Thank You For Using Our POS System! |]$'
 
 .code
 main proc
@@ -182,6 +185,7 @@ main_menu_start:
     mov ah, 09h
     int 21h
 
+	call newline
 	call newline
 
 	; ask to choose option
