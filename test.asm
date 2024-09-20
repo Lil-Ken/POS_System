@@ -18,7 +18,7 @@
 	hund db 100
 	
 	; Start messages
-    welcomeMsg db '[ Welcome to the POS System ]$'
+    welcomeMsg db '    [ Welcome to the POS System ]    $'
 	option8 db '[===================================]$'
     option1 db '| 1. Login$'
     option0 db '| 0. Exit Program$'
